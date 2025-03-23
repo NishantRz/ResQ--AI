@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ArrowRight, AlertTriangle, Check, Clock, MapPin, Wifi, AlertCircle, Users } from 'lucide-react';
@@ -37,13 +36,10 @@ const Dashboard: React.FC = () => {
     apiConnections: false
   });
   
-  // Simulate real-time data updates
   useEffect(() => {
     const intervalId = setInterval(() => {
-      // Update response time data
       setResponseData(prev => {
         const newData = [...prev];
-        // Update the last entry with a random value
         const lastIndex = newData.length - 1;
         newData[lastIndex] = { 
           ...newData[lastIndex], 
@@ -52,7 +48,6 @@ const Dashboard: React.FC = () => {
         return newData;
       });
       
-      // Randomly update emergency counts
       if (Math.random() > 0.7) {
         setEmergencyTypes(prev => {
           const newData = [...prev];
@@ -98,7 +93,6 @@ const Dashboard: React.FC = () => {
       duration: 5000,
     });
     
-    // Add a new responder to the list
     setActiveResponders(prev => [
       ...prev, 
       { name: 'Medical Team B', location: 'Downtown', status: 'active', response: '4 min' }
