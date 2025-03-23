@@ -1,11 +1,23 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { Phone, Plus, Mic, UserPlus, Trash2, Save } from 'lucide-react';
+import { Phone, Plus, Mic, UserPlus, Trash2, Save, Share2, Copy, Check } from 'lucide-react';
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Form, FormField, FormItem, FormLabel, FormControl } from "./ui/form";
-import { useForm } from "react-hook-form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface EmergencyContact {
   id: string;
@@ -22,7 +34,10 @@ const EmergencyContacts: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingText, setRecordingText] = useState('');
   const contactsRef = useRef<HTMLDivElement>(null);
-  const form = useForm();
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareableLink, setShareableLink] = useState('');
+  const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
+  const [isCopied, setIsCopied] = useState(false);
   
   // Mock speech recognition
   useEffect(() => {
@@ -193,6 +208,53 @@ const EmergencyContacts: React.FC = () => {
     });
   };
   
+  const generateShareableLink = () => {
+    // In a real app, this would generate a temporary link with a unique ID
+    // For this demo, we'll create a fake URL with the selected contact IDs encoded
+    const selectedContacts = contacts.filter(c => selectedContactIds.includes(c.id));
+    const contactData = JSON.stringify(selectedContacts);
+    const encodedData = btoa(contactData); // Base64 encode the contact data
+    const link = `https://resq-ai.example.com/share/${encodedData}`;
+    setShareableLink(link);
+  };
+  
+  const toggleContactSelection = (id: string) => {
+    if (selectedContactIds.includes(id)) {
+      setSelectedContactIds(prev => prev.filter(contactId => contactId !== id));
+    } else {
+      setSelectedContactIds(prev => [...prev, id]);
+    }
+  };
+  
+  const copyShareableLink = () => {
+    navigator.clipboard.writeText(shareableLink)
+      .then(() => {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+        toast.success("Link copied to clipboard");
+      })
+      .catch(err => {
+        console.error('Failed to copy: ', err);
+        toast.error("Failed to copy link");
+      });
+  };
+  
+  const importContacts = () => {
+    // In a real app, this would parse the incoming shared contacts
+    // For this demo, we'll generate some mock imported contacts
+    const mockImportedContacts: EmergencyContact[] = [
+      { id: 'import-1', name: 'Robert Johnson', phone: '(555) 888-9999', relation: 'Family' },
+      { id: 'import-2', name: 'Emma Thompson', phone: '(555) 777-6666', relation: 'Colleague' }
+    ];
+    
+    setContacts(prev => [...prev, ...mockImportedContacts]);
+    
+    toast.success("Contacts imported successfully", {
+      description: `Imported ${mockImportedContacts.length} emergency contacts`,
+      duration: 5000,
+    });
+  };
+  
   return (
     <div id="emergency-contacts" className="py-20 bg-secondary/50 dark:bg-secondary/10">
       <div className="section-container">
@@ -223,6 +285,145 @@ const EmergencyContacts: React.FC = () => {
                 <Mic size={16} className="mr-1" />
                 {isRecording ? "Listening..." : "Add by Voice"}
               </Button>
+              
+              <Dialog open={isSharing} onOpenChange={setIsSharing}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center"
+                    onClick={() => {
+                      setSelectedContactIds([]);
+                      setIsSharing(true);
+                    }}
+                  >
+                    <Share2 size={16} className="mr-1" />
+                    Share Contacts
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Share Emergency Contacts</DialogTitle>
+                    <DialogDescription>
+                      Select contacts to share with family members or emergency services.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <div className="max-h-60 overflow-y-auto space-y-2">
+                      {contacts.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-4">No contacts to share</p>
+                      ) : (
+                        contacts.map(contact => (
+                          <div 
+                            key={contact.id}
+                            className={`p-3 rounded-lg flex items-center justify-between cursor-pointer hover:bg-secondary/20 ${
+                              selectedContactIds.includes(contact.id) ? 'bg-secondary/30' : ''
+                            }`}
+                            onClick={() => toggleContactSelection(contact.id)}
+                          >
+                            <div>
+                              <p className="font-medium">{contact.name}</p>
+                              <p className="text-sm text-muted-foreground">{contact.phone}</p>
+                            </div>
+                            <div className={`h-5 w-5 rounded-full border ${
+                              selectedContactIds.includes(contact.id) 
+                                ? 'bg-primary border-primary' 
+                                : 'border-input'
+                            }`}>
+                              {selectedContactIds.includes(contact.id) && (
+                                <Check size={16} className="text-primary-foreground" />
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    
+                    {shareableLink ? (
+                      <div className="mt-4">
+                        <label className="text-sm font-medium">Shareable Link</label>
+                        <div className="flex mt-1.5">
+                          <Input 
+                            value={shareableLink} 
+                            readOnly 
+                            className="flex-1 bg-secondary/10"
+                          />
+                          <Button
+                            className="ml-2 px-3"
+                            onClick={copyShareableLink}
+                            variant="outline"
+                          >
+                            {isCopied ? <Check size={16} /> : <Copy size={16} />}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1.5">
+                          This link will allow recipients to import these contacts.
+                        </p>
+                      </div>
+                    ) : (
+                      <Button
+                        className="w-full mt-4"
+                        onClick={generateShareableLink}
+                        disabled={selectedContactIds.length === 0}
+                      >
+                        Generate Shareable Link
+                      </Button>
+                    )}
+                  </div>
+                  <DialogFooter className="sm:justify-start">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setIsSharing(false)}
+                    >
+                      Close
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center"
+                  >
+                    <Plus size={16} className="mr-1" />
+                    Import Contacts
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Import Emergency Contacts</DialogTitle>
+                    <DialogDescription>
+                      Import contacts shared by others or from other services.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium">Paste Shareable Link</label>
+                        <Input 
+                          placeholder="https://resq-ai.example.com/share/..." 
+                          className="mt-1.5"
+                        />
+                      </div>
+                      
+                      <p className="text-sm text-muted-foreground">
+                        Or import demo contacts to see how it works:
+                      </p>
+                      
+                      <Button 
+                        className="w-full" 
+                        onClick={importContacts}
+                      >
+                        Import Demo Contacts
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
           
