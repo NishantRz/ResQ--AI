@@ -1,7 +1,6 @@
-
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ArrowRight, AlertTriangle, Check, Clock, MapPin, Wifi, AlertCircle } from 'lucide-react';
+import { ArrowRight, AlertTriangle, Check, Clock, MapPin, Wifi, AlertCircle, Users } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const dashboardRef = useRef<HTMLDivElement>(null);
