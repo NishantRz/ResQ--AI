@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import CustomKeywords from "./components/CustomKeywords";
+import LocationPage from "./pages/LocationPage";
 import NotFound from "./pages/NotFound";
 
 // Create the QueryClient instance outside of the component
@@ -21,6 +22,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/keywords" element={<CustomKeywords />} />
+            <Route path="/location" element={<LocationPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
