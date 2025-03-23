@@ -8,9 +8,9 @@ import Index from "./pages/Index";
 import CustomKeywords from "./components/CustomKeywords";
 import NotFound from "./pages/NotFound";
 
+// Create the QueryClient instance outside of the component
 const queryClient = new QueryClient();
 
-// Create a function component for App
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
