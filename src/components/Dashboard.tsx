@@ -1,9 +1,74 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ArrowRight, AlertTriangle, Check, Clock, MapPin, Wifi, AlertCircle, Users } from 'lucide-react';
+import { toast } from "sonner";
 
 const Dashboard: React.FC = () => {
   const dashboardRef = useRef<HTMLDivElement>(null);
+  const [responseData, setResponseData] = useState([
+    { time: '1:00', responseTime: 2.5 },
+    { time: '2:00', responseTime: 3.1 },
+    { time: '3:00', responseTime: 2.3 },
+    { time: '4:00', responseTime: 4.2 },
+    { time: '5:00', responseTime: 3.8 },
+    { time: '6:00', responseTime: 2.9 },
+    { time: '7:00', responseTime: 2.2 },
+    { time: '8:00', responseTime: 1.9 },
+  ]);
+  
+  const [emergencyTypes, setEmergencyTypes] = useState([
+    { type: 'Medical', count: 32, status: 'critical', icon: <AlertCircle size={16} /> },
+    { type: 'Fire', count: 18, status: 'high', icon: <AlertTriangle size={16} /> },
+    { type: 'Security', count: 24, status: 'medium', icon: <AlertTriangle size={16} /> },
+    { type: 'Natural Disaster', count: 8, status: 'low', icon: <AlertTriangle size={16} /> },
+  ]);
+  
+  const [activeResponders, setActiveResponders] = useState([
+    { name: 'Medical Team A', location: 'Downtown', status: 'active', response: '2 min' },
+    { name: 'Fire Unit C', location: 'Westside', status: 'active', response: '4 min' },
+    { name: 'Police Squad B', location: 'Northside', status: 'standby', response: '3 min' },
+  ]);
+  
+  const [systemStatus, setSystemStatus] = useState({
+    voiceRecognition: true,
+    gpsTracking: true,
+    alertSystem: true,
+    apiConnections: false
+  });
+  
+  // Simulate real-time data updates
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      // Update response time data
+      setResponseData(prev => {
+        const newData = [...prev];
+        // Update the last entry with a random value
+        const lastIndex = newData.length - 1;
+        newData[lastIndex] = { 
+          ...newData[lastIndex], 
+          responseTime: Math.max(1, Math.min(5, newData[lastIndex].responseTime + (Math.random() - 0.5))) 
+        };
+        return newData;
+      });
+      
+      // Randomly update emergency counts
+      if (Math.random() > 0.7) {
+        setEmergencyTypes(prev => {
+          const newData = [...prev];
+          const randomIndex = Math.floor(Math.random() * newData.length);
+          const change = Math.random() > 0.5 ? 1 : -1;
+          newData[randomIndex] = {
+            ...newData[randomIndex],
+            count: Math.max(1, newData[randomIndex].count + change)
+          };
+          return newData;
+        });
+      }
+    }, 5000);
+    
+    return () => clearInterval(intervalId);
+  }, []);
   
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -27,29 +92,38 @@ const Dashboard: React.FC = () => {
     };
   }, []);
   
-  const responseData = [
-    { time: '1:00', responseTime: 2.5 },
-    { time: '2:00', responseTime: 3.1 },
-    { time: '3:00', responseTime: 2.3 },
-    { time: '4:00', responseTime: 4.2 },
-    { time: '5:00', responseTime: 3.8 },
-    { time: '6:00', responseTime: 2.9 },
-    { time: '7:00', responseTime: 2.2 },
-    { time: '8:00', responseTime: 1.9 },
-  ];
+  const handleDispatchMedical = () => {
+    toast.success("Medical team dispatched successfully!", {
+      description: "ETA: 4 minutes to Downtown location",
+      duration: 5000,
+    });
+    
+    // Add a new responder to the list
+    setActiveResponders(prev => [
+      ...prev, 
+      { name: 'Medical Team B', location: 'Downtown', status: 'active', response: '4 min' }
+    ]);
+  };
   
-  const emergencyTypes = [
-    { type: 'Medical', count: 32, status: 'critical', icon: <AlertCircle size={16} /> },
-    { type: 'Fire', count: 18, status: 'high', icon: <AlertTriangle size={16} /> },
-    { type: 'Security', count: 24, status: 'medium', icon: <AlertTriangle size={16} /> },
-    { type: 'Natural Disaster', count: 8, status: 'low', icon: <AlertTriangle size={16} /> },
-  ];
+  const handleSendAlert = () => {
+    toast.info("Alert notifications sent to all emergency contacts", {
+      description: "12 notifications dispatched successfully",
+      duration: 5000,
+    });
+  };
   
-  const activeResponders = [
-    { name: 'Medical Team A', location: 'Downtown', status: 'active', response: '2 min' },
-    { name: 'Fire Unit C', location: 'Westside', status: 'active', response: '4 min' },
-    { name: 'Police Squad B', location: 'Northside', status: 'standby', response: '3 min' },
-  ];
+  const toggleSystemStatus = (key: keyof typeof systemStatus) => {
+    setSystemStatus(prev => {
+      const newStatus = { ...prev, [key]: !prev[key] };
+      
+      toast(prev[key] ? "System component disabled" : "System component enabled", {
+        description: `${key} is now ${newStatus[key] ? "operational" : "offline"}`,
+        duration: 3000,
+      });
+      
+      return newStatus;
+    });
+  };
 
   return (
     <div id="dashboard" className="py-20 bg-secondary/50 dark:bg-secondary/10" ref={dashboardRef}>
@@ -75,7 +149,12 @@ const Dashboard: React.FC = () => {
                 <Wifi size={14} className="mr-1" />
                 <span>Online</span>
               </div>
-              <button className="text-sm px-3 py-1 rounded-full border border-input hover:bg-secondary transition-colors">Settings</button>
+              <button 
+                className="text-sm px-3 py-1 rounded-full border border-input hover:bg-secondary transition-colors"
+                onClick={() => toast("Settings panel opened", { description: "This would open settings in a full implementation" })}
+              >
+                Settings
+              </button>
             </div>
           </div>
           
@@ -88,7 +167,11 @@ const Dashboard: React.FC = () => {
               
               <div className="space-y-4">
                 {emergencyTypes.map((emergency, index) => (
-                  <div key={index} className="flex items-center justify-between">
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between hover:bg-secondary/50 p-2 rounded-md cursor-pointer transition-colors"
+                    onClick={() => toast.info(`${emergency.type} emergencies dashboard`, { description: `View all ${emergency.count} active ${emergency.type.toLowerCase()} emergencies` })}
+                  >
                     <div className="flex items-center">
                       {emergency.icon}
                       <span className="ml-2 text-sm">{emergency.type}</span>
@@ -165,12 +248,18 @@ const Dashboard: React.FC = () => {
               <div className="mt-6 space-y-4">
                 <h4 className="text-lg font-medium mb-4">Quick Actions</h4>
                 
-                <button className="w-full py-2 flex items-center justify-between px-4 rounded-lg bg-emergency/10 hover:bg-emergency/20 transition-colors">
+                <button 
+                  onClick={handleDispatchMedical}
+                  className="w-full py-2 flex items-center justify-between px-4 rounded-lg bg-emergency/10 hover:bg-emergency/20 transition-colors"
+                >
                   <span className="text-emergency font-medium">Dispatch Medical Team</span>
                   <ArrowRight size={16} className="text-emergency" />
                 </button>
                 
-                <button className="w-full py-2 flex items-center justify-between px-4 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition-colors">
+                <button 
+                  onClick={handleSendAlert}
+                  className="w-full py-2 flex items-center justify-between px-4 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+                >
                   <span className="text-blue-500 font-medium">Send Alert Notifications</span>
                   <ArrowRight size={16} className="text-blue-500" />
                 </button>
@@ -183,7 +272,10 @@ const Dashboard: React.FC = () => {
                 Emergency Locations
               </h4>
               
-              <div className="glass-card rounded-lg aspect-square overflow-hidden relative mb-6">
+              <div 
+                className="glass-card rounded-lg aspect-square overflow-hidden relative mb-6 cursor-pointer"
+                onClick={() => toast.info("Map View", { description: "This would open a full map view in a complete implementation" })}
+              >
                 <div className="absolute inset-0 bg-gray-200 dark:bg-gray-800 opacity-50"></div>
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-muted-foreground">
                   Map View
@@ -201,35 +293,47 @@ const Dashboard: React.FC = () => {
               <h4 className="text-lg font-medium mb-4">System Status</h4>
               
               <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
+                <div 
+                  className="flex items-center justify-between text-sm cursor-pointer hover:bg-secondary/50 p-2 rounded-md transition-colors"
+                  onClick={() => toggleSystemStatus('voiceRecognition')}
+                >
                   <span>Voice Recognition</span>
-                  <div className="flex items-center text-green-500">
-                    <Check size={16} className="mr-1" />
-                    <span>Operational</span>
+                  <div className={`flex items-center ${systemStatus.voiceRecognition ? 'text-green-500' : 'text-red-500'}`}>
+                    {systemStatus.voiceRecognition ? <Check size={16} className="mr-1" /> : <AlertTriangle size={16} className="mr-1" />}
+                    <span>{systemStatus.voiceRecognition ? 'Operational' : 'Offline'}</span>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between text-sm">
+                <div 
+                  className="flex items-center justify-between text-sm cursor-pointer hover:bg-secondary/50 p-2 rounded-md transition-colors"
+                  onClick={() => toggleSystemStatus('gpsTracking')}
+                >
                   <span>GPS Tracking</span>
-                  <div className="flex items-center text-green-500">
-                    <Check size={16} className="mr-1" />
-                    <span>Operational</span>
+                  <div className={`flex items-center ${systemStatus.gpsTracking ? 'text-green-500' : 'text-red-500'}`}>
+                    {systemStatus.gpsTracking ? <Check size={16} className="mr-1" /> : <AlertTriangle size={16} className="mr-1" />}
+                    <span>{systemStatus.gpsTracking ? 'Operational' : 'Offline'}</span>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between text-sm">
+                <div 
+                  className="flex items-center justify-between text-sm cursor-pointer hover:bg-secondary/50 p-2 rounded-md transition-colors"
+                  onClick={() => toggleSystemStatus('alertSystem')}
+                >
                   <span>Alert System</span>
-                  <div className="flex items-center text-green-500">
-                    <Check size={16} className="mr-1" />
-                    <span>Operational</span>
+                  <div className={`flex items-center ${systemStatus.alertSystem ? 'text-green-500' : 'text-red-500'}`}>
+                    {systemStatus.alertSystem ? <Check size={16} className="mr-1" /> : <AlertTriangle size={16} className="mr-1" />}
+                    <span>{systemStatus.alertSystem ? 'Operational' : 'Offline'}</span>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between text-sm">
+                <div 
+                  className="flex items-center justify-between text-sm cursor-pointer hover:bg-secondary/50 p-2 rounded-md transition-colors"
+                  onClick={() => toggleSystemStatus('apiConnections')}
+                >
                   <span>API Connections</span>
-                  <div className="flex items-center text-yellow-500">
-                    <AlertTriangle size={16} className="mr-1" />
-                    <span>Partial</span>
+                  <div className={`flex items-center ${systemStatus.apiConnections ? 'text-green-500' : 'text-yellow-500'}`}>
+                    {systemStatus.apiConnections ? <Check size={16} className="mr-1" /> : <AlertTriangle size={16} className="mr-1" />}
+                    <span>{systemStatus.apiConnections ? 'Operational' : 'Partial'}</span>
                   </div>
                 </div>
               </div>
